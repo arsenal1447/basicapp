@@ -2,6 +2,8 @@
 
 namespace app\models;
 
+
+use yii\base\Model;
 use Yii;
 
 /**
@@ -17,6 +19,9 @@ use Yii;
  */
 class SignUpForm extends \yii\db\ActiveRecord
 {
+    public $username;
+    public $email;
+    public $password;
     /**
      * @inheritdoc
      */
@@ -31,11 +36,15 @@ class SignUpForm extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['id', 'username', 'password', 'salt'], 'required'],
+            [['id', 'username', 'password',], 'required'],
             [['id', 'status'], 'integer'],
             [['username'], 'string', 'max' => 50],
             [['password'], 'string', 'max' => 100],
-            [['salt'], 'string', 'max' => 10]
+            [['salt'], 'string', 'max' => 10],
+            [['email'], 'filter', 'filter' => 'trim'],
+            [['email'], 'required'],
+            [['email'], 'email'],
+            [['email'], 'unique', 'targetClass' => '\app\models\User', 'message' => 'This email address has already been taken.']
         ];
     }
 
@@ -50,6 +59,7 @@ class SignUpForm extends \yii\db\ActiveRecord
             'password' => 'Password',
             'salt' => 'Salt',
             'status' => 'Status',
+            'email' => 'Email',
         ];
     }
 
@@ -60,4 +70,19 @@ class SignUpForm extends \yii\db\ActiveRecord
     {
         return $this->hasMany(RoleUser::className(), ['user_id' => 'id']);
     }
+    
+    
+    public function signup(){  
+        if($this->validate()){ 
+            return User::create($this->attributes);            
+        }
+        return null;        
+    }
+    
+    
+    
+    
+    
+    
+    
 }

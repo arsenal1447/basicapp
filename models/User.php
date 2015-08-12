@@ -3,6 +3,7 @@
 namespace app\models;
 
 use Yii;
+use yii\web\IdentityInterface;
 
 /**
  * This is the model class for table "user".
@@ -14,7 +15,7 @@ use Yii;
  *
  * @property RoleUser[] $roleUsers
  */
-class User extends \yii\db\ActiveRecord
+class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
 {    
     const STATUS_DELETED = 0;
 
@@ -40,7 +41,37 @@ class User extends \yii\db\ActiveRecord
             [['username'], 'string', 'max' => 50],
             [['password'], 'string', 'max' => 100],
             [['salt'], 'string', 'max' => 10],
+            [['email'],'filter', 'filter' => 'trim'],
+            [['email'],'required'],
+            [['email'],'email'],
+            [['email'],'unique']
         ];
+    }
+    
+    /**
+     * Creates a new user
+     *
+     * @param array $attributes
+     *        	the attributes given by field => value
+     * @return static null newly created model, or null on failure
+     */
+    public static function create($attributes)
+    {
+        /**
+         * @var User $user
+         */
+        $user = new static();
+        $user->setAttributes($attributes);
+        $user->setPassword($attributes['password']);
+        $user->generateAuthKey();
+        if ($user->save())
+        {
+            return $user;
+        }
+        else
+        {
+            return null;
+        }
     }
 
     /**
@@ -63,18 +94,84 @@ class User extends \yii\db\ActiveRecord
     {
         return $this->hasMany(RoleUser::className(), ['user_id' => 'id']);
     }
-    
     /**
-     * Finds user by username
-     *
-     * @param string $username
-     * @return static null
-     */
-    public static function findByUsername($username){
-        return static::findOne(
-            [
-            		'username' => $username,
-            		'status' => self::STATUS_ACTIVE
-            ]);
-    }
+	 * @inheritdoc
+	 */
+	public static function findIdentity($id)
+	{
+		return static::findOne($id);
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public static function findIdentityByAccessToken($token,$type = null)
+	{
+		throw new NotSupportedException(
+				'"findIdentityByAccessToken" is not implemented.');
+	}
+
+	/**
+	 * Finds user by username
+	 *
+	 * @param string $username
+	 * @return static null
+	 */
+	public static function findByUsername($username)
+	{
+		return static::findOne(
+				[
+						'username' => $username,
+						'status' => self::STATUS_ACTIVE
+				]);
+	}
+
+	/**
+	 * Finds user by password reset token
+	 *
+	 * @param string $token
+	 *        	password reset token
+	 * @return static null
+	 */
+	public static function findByPasswordResetToken($token)
+	{
+		$expire = \Yii::$app->params['user.passwordResetTokenExpire'];
+		$parts = explode('_', $token);
+		$timestamp = (int) end($parts);
+		if ($timestamp + $expire < time())
+		{
+			// token expired
+			return null;
+		}
+
+		return static::findOne(
+				[
+						'password_reset_token' => $token,
+						'status' => self::STATUS_ACTIVE
+				]);
+	}
+	
+	/**
+	 * @inheritdoc
+	 */
+	public function getId()
+	{
+	    return $this->getPrimaryKey();
+	}
+	
+	/**
+	 * @inheritdoc
+	 */
+	public function getAuthKey()
+	{
+	    return $this->auth_key;
+	}
+	
+	/**
+	 * @inheritdoc
+	 */
+	public function validateAuthKey($authKey)
+	{
+	    return $this->getAuthKey() === $authKey;
+	}
 }
