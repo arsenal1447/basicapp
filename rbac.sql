@@ -10,7 +10,7 @@ Target Server Type    : MYSQL
 Target Server Version : 50624
 File Encoding         : 65001
 
-Date: 2015-08-12 17:42:35
+Date: 2015-08-13 16:25:00
 */
 
 SET FOREIGN_KEY_CHECKS=0;
@@ -69,9 +69,7 @@ CREATE TABLE `role_user` (
   `role_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   KEY `roleid2` (`role_id`),
-  KEY `userid2` (`user_id`),
-  CONSTRAINT `roleid2` FOREIGN KEY (`role_id`) REFERENCES `role` (`r_id`),
-  CONSTRAINT `userid2` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
+  KEY `userid2` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
@@ -83,15 +81,19 @@ CREATE TABLE `role_user` (
 -- ----------------------------
 DROP TABLE IF EXISTS `user`;
 CREATE TABLE `user` (
-  `id` int(11) NOT NULL,
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `username` varchar(50) NOT NULL,
-  `password` varchar(100) NOT NULL,
-  `salt` varchar(10) NOT NULL,
+  `email` varchar(100) DEFAULT '',
+  `password_hash` varchar(100) NOT NULL,
+  `auth_key` varchar(32) NOT NULL,
   `status` tinyint(4) DEFAULT NULL,
-  `email` varchar(50) DEFAULT NULL,
+  `password` varchar(32) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Records of user
 -- ----------------------------
+INSERT INTO `user` VALUES ('8', 'zxx123', 'zxx123@qq.com', '$2y$13$o04zNHqho0ngHDDrkLL3aO/3F7hwFqPQlPWYToq2SkeMiD2mcd3hW', 'LmbXU8yhSGb23gqhPqsGnfKVWlyMBz-f', '10', null);
+INSERT INTO `user` VALUES ('9', 'zhou1234', 'zhou1234@qq.com', '$2y$13$Ki3RSr6iv2FyHpbwxdXJ1.7WFG1K4/7/L4aliyEKrNHV8p2U/M6u6', 'StQtCV2YBfygoBhJX-oUhACBsH1fsW0V', '10', null);
+INSERT INTO `user` VALUES ('10', 'abc', 'abc@qq.com', '$2y$13$/iyennkVdjXRRRA0vbWwuuIHNZFm14SyL3GPwzu8Th8nd8z1CXTPa', '4fGtXN_HgeFrqL74tvTX-sqTdWq6xQ6a', '10', null);
