@@ -16,7 +16,7 @@ use yii\web\IdentityInterface;
  * @property RoleUser[] $roleUsers
  */
 class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
-{    
+{
     const STATUS_DELETED = 0;
 
 	const STATUS_ACTIVE = 10;
@@ -36,56 +36,11 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
     public function rules()
     {
         return [
-            [['id', 'username', 'password', 'salt'], 'required'],
-            [['id'], 'integer'],
-            [['username'], 'string', 'max' => 50],
-            [['password'], 'string', 'max' => 100],
-            [['salt'], 'string', 'max' => 10],
-            [['email'],'filter', 'filter' => 'trim'],
-            [['email'],'required'],
-            [['email'],'email'],
-            [['email'],'unique']
+            ['status', 'default', 'value' => self::STATUS_ACTIVE],
+            ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_DELETED]],
         ];
-    }
-    
-    /**
-     * Creates a new user
-     *
-     * @param array $attributes
-     *        	the attributes given by field => value
-     * @return static null newly created model, or null on failure
-     */
-    public static function create($attributes)
-    {
-        /**
-         * @var User $user
-         */
-        $user = new static();
-        $user->setAttributes($attributes);
-        $user->setPassword($attributes['password']);
-        $user->generateAuthKey();
-        if ($user->save())
-        {
-            return $user;
-        }
-        else
-        {
-            return null;
-        }
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function attributeLabels()
-    {
-        return [
-            'id' => 'ID',
-            'username' => 'Username',
-            'password' => 'Password',
-            'salt' => 'Salt',
-        ];
-    }
 
     /**
      * @return \yii\db\ActiveQuery
@@ -150,7 +105,7 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
 						'status' => self::STATUS_ACTIVE
 				]);
 	}
-	
+
 	/**
 	 * @inheritdoc
 	 */
@@ -158,7 +113,7 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
 	{
 	    return $this->getPrimaryKey();
 	}
-	
+
 	/**
 	 * @inheritdoc
 	 */
@@ -166,7 +121,7 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
 	{
 	    return $this->auth_key;
 	}
-	
+
 	/**
 	 * @inheritdoc
 	 */
@@ -174,4 +129,37 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
 	{
 	    return $this->getAuthKey() === $authKey;
 	}
+
+    /**
+     * Generates password hash from password and sets it to the model
+     *
+     * @param string $password
+     */
+    public function setPassword($password)
+    {
+        $this->password_hash = Yii::$app->security->generatePasswordHash($password);
+    }
+    /**
+     * Generates "remember me" authentication key
+     */
+    public function generateAuthKey()
+    {
+        $this->auth_key = Yii::$app->security->generateRandomString();
+    }
+
+    /**
+     * Generates new password reset token
+     */
+    public function generatePasswordResetToken()
+    {
+        $this->password_reset_token = Yii::$app->security->generateRandomString() . '_' . time();
+    }
+
+    /**
+     * Removes password reset token
+     */
+    public function removePasswordResetToken()
+    {
+        $this->password_reset_token = null;
+    }
 }
